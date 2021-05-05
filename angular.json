@@ -122,5 +122,8 @@
       }
     }
   },
-  "defaultProject": "pet-adoption"
+  "defaultProject": "pet-adoption",
+  "cli": {
+    "analytics": "de68292e-38f6-4e7a-885e-3c7773192de6"
+  }
 }
