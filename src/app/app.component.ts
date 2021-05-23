@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Adopter } from './models/adopter';
 import { Pet } from './models/pet';
-
+import * as Vis from 'vis-network'
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
@@ -15,13 +15,13 @@ export class AppComponent implements OnInit {
   adopterLength: number;
   petsLength: number;
   bpGraph: boolean[][];
-  obj = Array(6).fill(null)
+  connectionsObject = []
   // value to fill the matrix
   value = null
   title = 'pet-adoption';
   ngOnInit() {
-    this.adopters = [{ id: 0, desiredPet: 'cat' }, { id: 1, desiredPet: 'dog' }, { id: 2, desiredPet: 'dog' }, { id: 3, desiredPet: 'dog' }, { id: 4, desiredPet: 'bird' }, { id: 5, desiredPet: 'cat' }]
-    this.pets = [{ id: 0, type: 'cat' }, { id: 1, type: 'dog' }, { id: 2, type: 'cat' }, { id: 3, type: 'dog' }, { id: 4, type: 'dog' }, { id: 5, type: 'bird' }]
+    this.adopters = [{ id: 0, name: "Guilherme",desiredPet: 'dog' }, { id: 1, name: "Rafael",desiredPet: 'dog' }, { id: 2, name:"Vicente" ,desiredPet: 'dog' }, { id: 3, name: "Ana",desiredPet: 'dog' }, { id: 4, name: "Giovanna",desiredPet: 'bird' }, { id: 5, name: "Antonio",desiredPet: 'cat' }]
+    this.pets = [{ id: 6, name: "Lisa", type: 'cat' }, { id: 7, name: "Zulu", type: 'dog' }, { id: 8, name: "Soya", type: 'cat' }, { id: 9, name: "Branca", type: 'dog' }, { id: 10, name: "Belinha", type: 'dog' }, { id: 11, name: "Sansão", type: 'bird' }]
 
     this.adopterLength = this.adopters.length;
     this.petsLength = this.pets.length;
@@ -33,12 +33,41 @@ export class AppComponent implements OnInit {
     // finding matching between pets and adopters
     this.adopters.forEach((adopter, lineIndex) => {
       this.pets.forEach((pet, columnIndex) => {
+
         this.bpGraph[lineIndex][columnIndex] = adopter.desiredPet == pet.type ? true : false
       })
     })
-    console.log(this.maxBPM(this.bpGraph))
+    this.maxBPM(this.bpGraph)
+    this.buildGraph();
   }
 
+
+  buildGraph(){
+    var nodes = [];
+    var edges = [];
+    var network = null;
+    // create an array with nodes
+    this.adopters.map(e => {
+      nodes.push({id: e.id, label: `Name: ${e.name}\n Desired pet: ${e.desiredPet}`})
+    })
+    this.pets.map(e => {
+      nodes.push({id: e.id, label: `Name: ${e.name}\n type: ${e.type}`})
+    })
+
+    // create an array with edges
+    this.connectionsObject.map(e => {
+      edges.push({from: e.adopterId, to: e.selectedPet})
+    })
+
+    // create a network
+    var container = document.getElementById("mynetwork");
+    var data = {
+      nodes: nodes,
+      edges: edges,
+    };
+    var options = {};
+    network = new Vis.Network(container, data, options);
+  }
   // A DFS based recursive function that 
   // returns true if a matching for 
   // vertex u is possible
@@ -105,7 +134,7 @@ export class AppComponent implements OnInit {
 
     // with this setup, adopterIndexMatched
     adopterIndexMatched.map((AdopterIndex, petIndex) => {
-     console.log(this.adopters[AdopterIndex],this.pets[petIndex])
+     this.connectionsObject.push({adopterId: this.adopters[AdopterIndex]?.id,selectedPet: this.pets[petIndex]?.id})
     })
     return result
   }
