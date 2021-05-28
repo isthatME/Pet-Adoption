@@ -16,48 +16,57 @@ export class AppComponent implements OnInit {
   petsLength: number;
   bpGraph: boolean[][];
   connectionsObject = []
-  // value to fill the matrix
-  value = null
   title = 'pet-adoption';
   ngOnInit() {
-    this.adopters = [{ id: 0, name: "Guilherme",desiredPet: 'dog' }, { id: 1, name: "Rafael",desiredPet: 'dog' }, { id: 2, name:"Vicente" ,desiredPet: 'dog' }, { id: 3, name: "Ana",desiredPet: 'dog' }, { id: 4, name: "Giovanna",desiredPet: 'bird' }, { id: 5, name: "Antonio",desiredPet: 'cat' }]
-    this.pets = [{ id: 6, name: "Lisa", type: 'cat' }, { id: 7, name: "Zulu", type: 'dog' }, { id: 8, name: "Soya", type: 'cat' }, { id: 9, name: "Branca", type: 'dog' }, { id: 10, name: "Belinha", type: 'dog' }, { id: 11, name: "Sansão", type: 'bird' }]
+    this.adopters = [{ id: 0, name: "Guilherme", desiredPet: 'dog', maxAge: 5,}, { id: 1, name: "Rafael", desiredPet: 'dog' , maxAge: 1 }, { id: 2, name: "Vicente", desiredPet: 'dog' , maxAge: 3 }, { id: 3, name: "Ana", desiredPet: 'cat' , maxAge: 1 }, { id: 4, name: "Giovanna", desiredPet: 'bird' , maxAge: 1 }, { id: 5, name: "Antonio", desiredPet: 'cat', maxAge: 2}]
+    this.pets = [{ id: 6, name: "Lisa", type: 'cat' , age: 1 }, { id: 7, name: "Zulu", type: 'dog' , age: 1 }, { id: 8, name: "Soya", type: 'cat' , age: 2 }, { id: 9, name: "Branca", type: 'dog' , age: 2 }, { id: 10, name: "Belinha", type: 'dog' , age: 3 }, { id: 11, name: "Sansão", type: 'bird', age: 1}]
 
     this.adopterLength = this.adopters.length;
     this.petsLength = this.pets.length;
 
     this.bpGraph = Array(this.adopterLength);
     for (var i = 0; i < this.adopterLength; i++) {
-      this.bpGraph[i] = Array(this.petsLength).fill(this.value);
+      this.bpGraph[i] = Array(this.petsLength).fill(null);
     }
-    // finding matching between pets and adopters
-    this.adopters.forEach((adopter, lineIndex) => {
-      this.pets.forEach((pet, columnIndex) => {
-
-        this.bpGraph[lineIndex][columnIndex] = adopter.desiredPet == pet.type ? true : false
-      })
-    })
-    this.maxBPM(this.bpGraph)
+    this.buildMatrixOfMatches();
+    this.maxBPM(this.bpGraph);
     this.buildGraph();
   }
 
+  buildMatrixOfMatches() {
+    // finding matching between pets and adopters
+    this.adopters.forEach((adopter, lineIndex) => {
+      this.pets.forEach((pet, columnIndex) => {
+        this.bpGraph[lineIndex][columnIndex] = adopter.desiredPet == pet.type && adopter.maxAge >= pet.age ? true : false
+      })
+    })
+  }
 
-  buildGraph(){
+  buildGraph() {
     var nodes = [];
     var edges = [];
     var network = null;
     // create an array with nodes
-    this.adopters.map(e => {
-      nodes.push({id: e.id, label: `Name: ${e.name}\n Desired pet: ${e.desiredPet}`})
+    let count = 0
+    this.adopters.map((e, index) => {
+      count += 100
+      nodes.push({ id: e.id, label: `Name: ${e.name}\n Desired pet: ${e.desiredPet}\n Max age: ${e.maxAge}`, x: 100, y: index + count })
     })
-    this.pets.map(e => {
-      nodes.push({id: e.id, label: `Name: ${e.name}\n type: ${e.type}`})
+    count = 0
+    this.pets.map((e, index) => {
+      count += 100
+      nodes.push({ id: e.id, label: `Name: ${e.name}\n type: ${e.type}\n Age: ${e.age}`, x: 600, y: count })
     })
 
     // create an array with edges
-    this.connectionsObject.map(e => {
-      edges.push({from: e.adopterId, to: e.selectedPet})
+    this.adopters.forEach(adopter => {
+      this.pets.forEach(pet => {
+        if (adopter.desiredPet == pet.type) {
+          edges.push({ from: adopter.id, to: pet.id })
+        }
+      })
     })
+
 
     // create a network
     var container = document.getElementById("mynetwork");
@@ -65,9 +74,54 @@ export class AppComponent implements OnInit {
       nodes: nodes,
       edges: edges,
     };
-    var options = {};
+    var options = {
+      interaction: {
+        dragNodes: false,
+      }, physics: {
+        enabled: false,
+      }
+    };
     network = new Vis.Network(container, data, options);
   }
+  buildMaximumBipartiteGraph() {
+    var nodes = [];
+    var edges = [];
+    var network = null;
+    // create an array with nodes
+    let count = 0
+    this.adopters.map((e, index) => {
+      count += 100
+      nodes.push({ id: e.id, label: `Name: ${e.name}\n Desired pet: ${e.desiredPet}\n Max age: ${e.maxAge}`, x: 100, y: index + count })
+    })
+    count = 0
+    this.pets.map((e, index) => {
+      count += 100
+      nodes.push({ id: e.id, label: `Name: ${e.name}\n type: ${e.type}\n Age: ${e.age}`, x: 600, y: count })
+    })
+
+    // create an array with edges
+    this.connectionsObject.map(e => {
+      edges.push({ from: e.adopterId, to: e.selectedPet })
+    })
+
+
+    // create a network
+    var container = document.getElementById("mynetwork");
+    var data = {
+      nodes: nodes,
+      edges: edges,
+    };
+    var options = {
+      interaction: {
+        dragNodes: false,
+      }, physics: {
+        enabled: false,
+      }
+    };
+    network = new Vis.Network(container, data, options);
+  }
+
+
   // A DFS based recursive function that 
   // returns true if a matching for 
   // vertex u is possible
@@ -89,10 +143,10 @@ export class AppComponent implements OnInit {
         // above line, adopterIndexMatched[v] in the following
         // recursive call will not get pet 'v' again
         if (adopterIndexMatched[v] < 0 || this.bpm(bpGraph, adopterIndexMatched[v], seen, adopterIndexMatched)) {
-          adopterIndexMatched[v] = u 
+          adopterIndexMatched[v] = u
           // all the possibilities of match between adopters and pets
           // this.teste.push({e: this.adopters[u], x: this.pets[v]})
-          
+
           return true;
         }
       }
@@ -131,14 +185,17 @@ export class AppComponent implements OnInit {
         result++
       }
     }
-
     // with this setup, adopterIndexMatched
     adopterIndexMatched.map((AdopterIndex, petIndex) => {
-     this.connectionsObject.push({adopterId: this.adopters[AdopterIndex]?.id,selectedPet: this.pets[petIndex]?.id})
+      this.connectionsObject.push({ adopterId: this.adopters[AdopterIndex]?.id, selectedPet: this.pets[petIndex]?.id })
     })
     return result
   }
 }
+
+
+
+
 
 
 
